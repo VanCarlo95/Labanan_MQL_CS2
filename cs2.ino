@@ -4,7 +4,7 @@
 //HOTSPOT WORKING
 const char* ssid = "Ehe_1010";
 const char* password = "vancarlogwapo95!";
-const char* serverAddress = "http://192.168.155.28:3000/";
+const char* serverAddress = "http://192.168.155.28:3000/api/sensor-data";
 
 // PIR sensor connected to GPIO 2 (D4)
 const int pirPin = D4;

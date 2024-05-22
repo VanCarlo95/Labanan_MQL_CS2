@@ -1,11 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const mongoose = require('mongoose');
 
 const app = express();
 const port = 3000;
 
 // Middleware
+app.use(cors()); // Allow CORS for all routes
 app.use(bodyParser.json());
 
 // MongoDB connection
@@ -29,7 +31,7 @@ app.use((req, res, next) => {
 });
 
 // POST API for adding sensor data
-app.post('/', async (req, res) => {
+app.post('/api/sensor-data', async (req, res) => {
   const { motionDetected } = req.body;
   
   if (motionDetected === undefined) {
@@ -47,7 +49,7 @@ app.post('/', async (req, res) => {
 });
 
 // GET API for fetching sensor data
-app.get('/', async (req, res) => {
+app.get('/api/sensor-data', async (req, res) => {
   try {
     const sensorData = await SensorData.find().sort({ timestamp: -1 }).limit(100);
     res.status(200).send(sensorData);
@@ -58,6 +60,6 @@ app.get('/', async (req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
+app.listen(port, '192.168.1.6', () => {
   console.log(`Server running on http://192.168.1.6:${port}`);
 });
