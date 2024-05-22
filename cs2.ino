@@ -1,21 +1,21 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 
-const char* ssid = "PLDTHOMEFIBRT6y6x";
-const char* password = "PLDTWIFIzgr6d";
-const char* serverAddress = "http://192.168.1.7:3000/api/sensor-data";
+//HOTSPOT WORKING
+const char* ssid = "Ehe_1010";
+const char* password = "vancarlogwapo95!";
+const char* serverAddress = "http://192.168.155.28:3000/";
 
+// PIR sensor connected to GPIO 2 (D4)
 const int pirPin = D4;
-WiFiClient client;
-bool lastMotionState = false;
 
 void setup() {
   Serial.begin(115200);
   pinMode(pirPin, INPUT);
 
   // Connect to Wi-Fi
+  Serial.println("Connecting to WiFi...");
   WiFi.begin(ssid, password);
-  Serial.println("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.print(".");
@@ -26,36 +26,45 @@ void setup() {
 }
 
 void loop() {
-  bool motionDetected = digitalRead(pirPin) == HIGH;
-  if (motionDetected != lastMotionState) {
-    Serial.println(motionDetected ? "Motion detected!" : "No motion");
-    sendDataToServer(motionDetected);
-    lastMotionState = motionDetected;
+  int pirValue = digitalRead(pirPin);
+
+  Serial.print("PIR Value: ");
+  Serial.println(pirValue);
+
+  if (pirValue == HIGH) {
+    Serial.println("Motion detected!");
+    sendDataToServer(true);
+  } else {
+    Serial.println("No motion detected.");
+    sendDataToServer(false);
   }
+
   delay(5000);
 }
 
 void sendDataToServer(bool motionDetected) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-
-    String data = "{\"motionDetected\":" + String(motionDetected ? "true" : "false") + "}";
+    WiFiClient client;
     
-    Serial.println("Connecting to server: " + String(serverAddress));
-    Serial.println("Data to send: " + data);
+    // Prepare JSON payload
+    String payload = "{\"motionDetected\":" + String(motionDetected ? "true" : "false") + "}";
 
+    Serial.println("Connecting to server: " + String(serverAddress));
+    Serial.println("Data to send: " + payload);
+
+    // Start connection and send HTTP header and body
     http.begin(client, serverAddress);
     http.addHeader("Content-Type", "application/json");
-    http.setTimeout(20000); // Set timeout to 20 seconds
-    int httpResponseCode = http.POST(data);
+
+    // Send HTTP POST request
+    int httpResponseCode = http.POST(payload);
 
     if (httpResponseCode > 0) {
-      Serial.print("Server response code: ");
+      String response = http.getString();
+      Serial.print("HTTP Response code: ");
       Serial.println(httpResponseCode);
-      if (httpResponseCode == HTTP_CODE_OK || httpResponseCode == HTTP_CODE_CREATED) {
-        String payload = http.getString();
-        Serial.println("Server response: " + payload);
-      }
+      Serial.println("Response: " + response);
     } else {
       Serial.print("Error in HTTP request: ");
       Serial.println(httpResponseCode);
@@ -64,6 +73,6 @@ void sendDataToServer(bool motionDetected) {
 
     http.end();
   } else {
-    Serial.println("WiFi not connected");
+    Serial.println("WiFi not connected. Unable to send data to server");
   }
 }
